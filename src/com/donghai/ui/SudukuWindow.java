@@ -27,7 +27,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class SudukuWindow extends Application {
-	
+
 	public static final int SCREEN_W = 630;
 	public static final int SCREEN_H = 630;
 	public static final String SUDOKU_FOLDER_NAME = "boards";
@@ -43,8 +43,10 @@ public class SudukuWindow extends Application {
 	public int currentRow, currentCol;// 当前的行和列
 	public Cell[][] cells;
 	private boolean cheackSolve;
-private Rectangle pause;
-private Pane contentPane;
+	private Rectangle pause;
+	private Pane contentPane;
+	
+//	Test to Git
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -55,16 +57,16 @@ private Pane contentPane;
 		setUpBorad();
 		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
 
-		//----------------------------content pane
-		
+		// ----------------------------content pane
+
 		contentPane = new StackPane();
 		contentPane.getChildren().add(borad);
 		contentPane.getChildren().add(gridPane);
 
-		//----------------------------pause pane
-		 pause = new Rectangle(SCREEN_W, SCREEN_H);
-		 pause.setFill(new Color(0.5, 0.5, 0.5,.7));
-		 
+		// ----------------------------pause pane
+		pause = new Rectangle(SCREEN_W, SCREEN_H);
+		pause.setFill(new Color(0.5, 0.5, 0.5, .7));
+
 		Scene scene = new Scene(contentPane, SCREEN_W, SCREEN_H);
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
@@ -82,8 +84,8 @@ private Pane contentPane;
 
 	// 初始化数据
 	{
-		
-//		cheackSolve = true;
+
+		// cheackSolve = true;
 		currentCol = 0;
 		currentRow = 0;
 
@@ -111,9 +113,9 @@ private Pane contentPane;
 
 		gridPane.setOnKeyPressed(e -> {
 
-			if(cheackSolve)
+			if (cheackSolve)
 				return;
-				
+
 			String keyName = e.getCode().getName();
 
 			// 删除操作
@@ -123,13 +125,13 @@ private Pane contentPane;
 					if (node instanceof Cell) {
 						Cell c = (Cell) node;
 						if (c.getSelect()) {
-							if (!c.getText().equals("")&&pazzle[c.getRow()][c.getCol()]!=1) {
-								
+							if (!c.getText().equals("") && pazzle[c.getRow()][c.getCol()] != 1) {
+
 								matrix[c.getRow()][c.getCol()] = Integer.valueOf(0);
 
 								// 清除错误提示
 								drawTips(list);
-								
+
 								c.setText("");
 							}
 							break;
@@ -159,21 +161,20 @@ private Pane contentPane;
 							// printMatrix();
 
 							cheackSolve = SudukuTool.cheackSolve(matrix);
-							
-							if(cheackSolve)
-							{
-								//绘画pause background and win text
+
+							if (cheackSolve) {
+								// 绘画pause background and win text
 								contentPane.getChildren().add(pause);
-							    Label text = new Label("Congratulation,You Finsh It!");
-							    text.setTextFill(Color.WHITE);
-							    text.setFont(Font.font(STYLESHEET_MODENA, 35));
-							    text.setAlignment(Pos.CENTER);
-							    
-							    contentPane.getChildren().add(text);
+								Label text = new Label("Congratulation,You Finsh It!");
+								text.setTextFill(Color.WHITE);
+								text.setFont(Font.font(STYLESHEET_MODENA, 35));
+								text.setAlignment(Pos.CENTER);
+
+								contentPane.getChildren().add(text);
 							}
-								
-//							if (SudukuTool.cheackSolve(matrix))
-//								System.out.println("Win");
+
+							// if (SudukuTool.cheackSolve(matrix))
+							// System.out.println("Win");
 
 							break;
 						}
@@ -195,8 +196,7 @@ private Pane contentPane;
 					label.setTextFill(Color.GRAY.darker());
 					label.setFont(new Font(20));
 
-				} else 
-				{
+				} else {
 					label.setFont(new Font("Monaco", 20));
 				}
 
@@ -206,19 +206,18 @@ private Pane contentPane;
 		}
 	}
 
-	//绘画提示颜色
-	private void drawTips(ObservableList<Node> list)
-	{
+	// 绘画提示颜色
+	private void drawTips(ObservableList<Node> list) {
 		for (Node node_ : list) {
 			Cell c_ = (Cell) node_;
-			if (!c_.getText().equals("")&&!SudukuTool.isValid(c_.getRow(), c_.getCol(), matrix)) {
+			if (!c_.getText().equals("") && !SudukuTool.isValid(c_.getRow(), c_.getCol(), matrix)) {
 				c_.setTextFill(Color.RED);
 			} else {
-				
-				//恢复颜色
+
+				// 恢复颜色
 				c_.setTextFill(Color.GRAY.darker());
-				//如果是由用户填上的数字，则颜色为黑色
-				if(pazzle[c_.getRow()][c_.getCol()]!=1)
+				// 如果是由用户填上的数字，则颜色为黑色
+				if (pazzle[c_.getRow()][c_.getCol()] != 1)
 					c_.setTextFill(Color.BLACK);
 			}
 		}
