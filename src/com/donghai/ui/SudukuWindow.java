@@ -1,9 +1,6 @@
 package com.donghai.ui;
 
-import java.awt.Panel;
 import java.io.File;
-import java.time.chrono.IsoChronology;
-
 import com.donghai.core.DifficultyLevel;
 import com.donghai.core.SudukuTool;
 import com.donghai.ui.node.BoradPanel;
@@ -16,6 +13,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -44,7 +43,7 @@ public class SudukuWindow extends Application {
 	public Cell[][] cells;
 	private boolean cheackSolve;
 private Rectangle pause;
-private Pane contentPane;
+private BorderPane contentPane;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -57,9 +56,9 @@ private Pane contentPane;
 
 		//----------------------------content pane
 		
-		contentPane = new StackPane();
-		contentPane.getChildren().add(borad);
-		contentPane.getChildren().add(gridPane);
+		contentPane = new BorderPane();
+		contentPane.setCenter(borad);
+		contentPane.setCenter(gridPane);
 
 		//----------------------------pause pane
 		 pause = new Rectangle(SCREEN_W, SCREEN_H);
@@ -163,17 +162,14 @@ private Pane contentPane;
 							if(cheackSolve)
 							{
 								//绘画pause background and win text
-								contentPane.getChildren().add(pause);
-							    Label text = new Label("Congratulation,You Finsh It!");
+								contentPane.setCenter(pause);
+							    Label text = new Label("Congratulation,You Finsh It\nClick to next");
 							    text.setTextFill(Color.WHITE);
 							    text.setFont(Font.font(STYLESHEET_MODENA, 35));
 							    text.setAlignment(Pos.CENTER);
 							    
 							    contentPane.getChildren().add(text);
 							}
-								
-//							if (SudukuTool.cheackSolve(matrix))
-//								System.out.println("Win");
 
 							break;
 						}
