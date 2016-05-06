@@ -13,13 +13,13 @@ import java.io.FileNotFoundException;
 
 import com.donghai.ui.node.SelectButton;
 
-public class Logo extends StackPane {
+public class LogoMenuPane extends StackPane {
 
 	private VBox buttonBox;
 	private SelectButton[] difficutlySelections;
 	private int currentSelected;
 
-	public Logo() {
+	public LogoMenuPane() {
 
 		try {
 			initView();
@@ -30,7 +30,7 @@ public class Logo extends StackPane {
 
 	public void initView() throws FileNotFoundException {
 
-		String pathname = "menuLog.png";
+		String pathname = "img/menuLog.png";
 		FileInputStream fis = new FileInputStream(new File(pathname));
 		Image img = new Image(fis);
 		ImageView background = new ImageView(img);
@@ -73,8 +73,7 @@ public class Logo extends StackPane {
 		menuP.getChildren().add(buttonBox);
 
 		this.getChildren().add(menuP);
-		menuP.setFocusTraversable(true);
-		menuP.setOnKeyPressed(e -> {
+		this.setOnKeyPressed(e -> {
 
 			selectionMenu(e.getCode().getName());
 
@@ -83,7 +82,6 @@ public class Logo extends StackPane {
 				// get current difficulty
 				System.out.println(difficutlySelections[currentSelected].getText());
 			}
-
 		});
 	}
 

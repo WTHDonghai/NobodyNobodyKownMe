@@ -1,10 +1,15 @@
 package com.donghai.ui;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import com.donghai.core.DifficultyLevel;
 import com.donghai.core.SudukuTool;
 import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
+import com.donghai.ui.node.SelectButton;
+
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -12,13 +17,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
@@ -26,7 +32,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class SudukuWindow extends Application {
-	
+
 	public static final int SCREEN_W = 630;
 	public static final int SCREEN_H = 630;
 	public static final String SUDOKU_FOLDER_NAME = "boards";
@@ -42,8 +48,9 @@ public class SudukuWindow extends Application {
 	public int currentRow, currentCol;// 当前的行和列
 	public Cell[][] cells;
 	private boolean cheackSolve;
-private Rectangle pause;
-private BorderPane contentPane;
+	private Rectangle pause;
+	private Pane contentPane;
+	private DifficultyLevel[] difficultys;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -51,20 +58,6 @@ private BorderPane contentPane;
 		primaryStage.setTitle("Sudoku by Madison");
 		// primaryStage.setResizable(false);
 
-		setUpBorad();
-		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
-
-		//----------------------------content pane
-		
-		contentPane = new BorderPane();
-		contentPane.setCenter(borad);
-		contentPane.setCenter(gridPane);
-
-		//----------------------------pause pane
-		 pause = new Rectangle(SCREEN_W, SCREEN_H);
-		 pause.setFill(new Color(0.5, 0.5, 0.5,.7));
-		 
-		Scene scene = new Scene(contentPane, SCREEN_W, SCREEN_H);
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
@@ -74,15 +67,36 @@ private BorderPane contentPane;
 			}
 		});
 
+		contentPane = new Pane();
+
+		LogoMenuPane logo = new LogoMenuPane();
+		logo.setFocusTraversable(true);
+		contentPane.getChildren().add(logo);
+		
+		Scene scene = new Scene(contentPane, SCREEN_W, SCREEN_H);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 
 	}
 
+	private void startGame() {
+		
+		setUpBorad();
+		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
+		// ----------------------------content pane
+
+		contentPane.getChildren().add(borad);
+		contentPane.getChildren().add(gridPane);
+
+		// ----------------------------pause pane
+		pause = new Rectangle(SCREEN_W, SCREEN_H);
+		pause.setFill(new Color(0.5, 0.5, 0.5, .7));
+	}
+
 	// 初始化数据
 	{
-		
-//		cheackSolve = true;
+
+		// cheackSolve = true;
 		currentCol = 0;
 		currentRow = 0;
 
@@ -92,11 +106,13 @@ private BorderPane contentPane;
 		grid_h = SCREEN_H / 9;
 		grid_w = SCREEN_W / 9;
 
+		difficultys = new DifficultyLevel[]{DifficultyLevel.EASY,DifficultyLevel.MEDIUM,DifficultyLevel.DIFFICULT,DifficultyLevel.EVIL};
+		
 		// 假设难度为简单
 		// level = DifficultyLevel.EASY;
 		level = DifficultyLevel.MEDIUM;
 
-		loadPazzle();
+//		loadPazzle();
 
 	}
 
@@ -110,9 +126,9 @@ private BorderPane contentPane;
 
 		gridPane.setOnKeyPressed(e -> {
 
-			if(cheackSolve)
+			if (cheackSolve)
 				return;
-				
+
 			String keyName = e.getCode().getName();
 
 			// 删除操作
@@ -122,13 +138,13 @@ private BorderPane contentPane;
 					if (node instanceof Cell) {
 						Cell c = (Cell) node;
 						if (c.getSelect()) {
-							if (!c.getText().equals("")&&pazzle[c.getRow()][c.getCol()]!=1) {
-								
+							if (!c.getText().equals("") && pazzle[c.getRow()][c.getCol()] != 1) {
+
 								matrix[c.getRow()][c.getCol()] = Integer.valueOf(0);
 
 								// 清除错误提示
 								drawTips(list);
-								
+
 								c.setText("");
 							}
 							break;
@@ -158,17 +174,16 @@ private BorderPane contentPane;
 							// printMatrix();
 
 							cheackSolve = SudukuTool.cheackSolve(matrix);
-							
-							if(cheackSolve)
-							{
-								//绘画pause background and win text
-								contentPane.setCenter(pause);
-							    Label text = new Label("Congratulation,You Finsh It\nClick to next");
-							    text.setTextFill(Color.WHITE);
-							    text.setFont(Font.font(STYLESHEET_MODENA, 35));
-							    text.setAlignment(Pos.CENTER);
-							    
-							    contentPane.getChildren().add(text);
+
+							if (cheackSolve) {
+								// 绘画pause background and win text
+								contentPane.getChildren().add(pause);
+								Label text = new Label("Congratulation,You Finsh It\nClick to next");
+								text.setTextFill(Color.WHITE);
+								text.setFont(Font.font(STYLESHEET_MODENA, 35));
+								text.setAlignment(Pos.CENTER);
+
+								contentPane.getChildren().add(text);
 							}
 
 							break;
@@ -191,8 +206,7 @@ private BorderPane contentPane;
 					label.setTextFill(Color.GRAY.darker());
 					label.setFont(new Font(20));
 
-				} else 
-				{
+				} else {
 					label.setFont(new Font("Monaco", 20));
 				}
 
@@ -202,19 +216,18 @@ private BorderPane contentPane;
 		}
 	}
 
-	//绘画提示颜色
-	private void drawTips(ObservableList<Node> list)
-	{
+	// 绘画提示颜色
+	private void drawTips(ObservableList<Node> list) {
 		for (Node node_ : list) {
 			Cell c_ = (Cell) node_;
-			if (!c_.getText().equals("")&&!SudukuTool.isValid(c_.getRow(), c_.getCol(), matrix)) {
+			if (!c_.getText().equals("") && !SudukuTool.isValid(c_.getRow(), c_.getCol(), matrix)) {
 				c_.setTextFill(Color.RED);
 			} else {
-				
-				//恢复颜色
+
+				// 恢复颜色
 				c_.setTextFill(Color.GRAY.darker());
-				//如果是由用户填上的数字，则颜色为黑色
-				if(pazzle[c_.getRow()][c_.getCol()]!=1)
+				// 如果是由用户填上的数字，则颜色为黑色
+				if (pazzle[c_.getRow()][c_.getCol()] != 1)
 					c_.setTextFill(Color.BLACK);
 			}
 		}
@@ -415,6 +428,125 @@ private BorderPane contentPane;
 		}
 	}
 
+	/**
+	 * 主界面
+	 * @param args
+	 */
+	public class LogoMenuPane extends StackPane {
+
+		private VBox buttonBox;
+		private SelectButton[] difficutlySelections;
+		private int currentSelected;
+
+		public LogoMenuPane() {
+
+			try {
+				initView();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void initView() throws FileNotFoundException {
+
+			String pathname = "img/menuLog.png";
+			FileInputStream fis = new FileInputStream(new File(pathname));
+			Image img = new Image(fis);
+			ImageView background = new ImageView(img);
+
+			// StackPane contentP = new StackPane();
+
+			Rectangle r = new Rectangle(630, 630);
+			r.setFill(Color.WHITE);
+
+			this.getChildren().add(r);
+			this.getChildren().add(background);
+
+			buttonBox = new VBox(6.5);
+			String[] dificultyText = { "EASY", "NORMAL", "HARD", "EVIL" };
+			difficutlySelections = new SelectButton[4];
+			for (int i = 0; i < dificultyText.length; i++) {
+
+				SelectButton selectButton = new SelectButton(dificultyText[i]);
+
+				selectButton.setOnMouseClicked(e -> {
+
+					difficutlyMenuClear();
+					selectButton.setSelete(true);
+
+				});
+
+				if (i == 0) {
+					selectButton.setSelete(true);
+					currentSelected = 0;
+				}
+
+				buttonBox.getChildren().add(selectButton);
+				difficutlySelections[i] = selectButton;
+			}
+
+			buttonBox.setLayoutX(152);
+			buttonBox.setLayoutY(278);
+
+			Pane menuP = new Pane();
+			menuP.getChildren().add(buttonBox);
+
+			this.getChildren().add(menuP);
+			this.setOnKeyPressed(e -> {
+
+				selectionMenu(e.getCode().getName());
+
+				// startGame
+				if ("Enter".equals(e.getCode().getName()) && currentSelected != -1) {
+					// get current difficulty
+					level = difficultys[currentSelected];
+//					System.out.println(level);
+					currentSelected = -1;
+					SudukuWindow.this.contentPane.getChildren().remove(this);
+					loadPazzle();
+					startGame();
+				}
+			});
+		}
+
+		private void selectionMenu(String name) {
+
+			difficutlyMenuClear();
+
+			switch (name) {
+			case "Up":
+
+				currentSelected--;
+
+				if (currentSelected < 0)
+					currentSelected = 4 - 1;
+
+				difficutlySelections[currentSelected].setSelete(true);
+
+				break;
+			case "Down":
+
+				currentSelected++;
+				difficutlySelections[currentSelected %= difficutlySelections.length].setSelete(true);
+
+				break;
+			case "Left":
+			case "Right":
+				currentSelected = -1;
+				break;
+			}
+
+		}
+
+		private void difficutlyMenuClear() {
+			for (SelectButton selectBtn : difficutlySelections) {
+				selectBtn.setSelete(false);
+			}
+		}
+	}
+
+	
+	
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
