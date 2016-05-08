@@ -3,16 +3,22 @@ package com.donghai.ui;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import com.donghai.core.DifficultyLevel;
 import com.donghai.core.SudukuTool;
 import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
 import com.donghai.ui.node.SelectButton;
-
+import com.donghai.ui.node.StatePanel;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -20,16 +26,21 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
 public class SudukuWindow extends Application {
 
@@ -48,22 +59,28 @@ public class SudukuWindow extends Application {
 	public int currentRow, currentCol;// 当前的行和列
 	public Cell[][] cells;
 	private boolean cheackSolve;
-	private Rectangle pause;
+	private StackPane pause;
 	private Pane contentPane;
 	private DifficultyLevel[] difficultys;
+	private Rectangle paseBackground;
+	private String time;// 做题计时
+	private BorderPane mainP;// 程序的主面板
+	private boolean isStart;//开始游戏
+	private StatePanel timePane;
+	private long currentTime;
+	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss",Locale.US);
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
 		primaryStage.setTitle("Sudoku by Madison");
-		// primaryStage.setResizable(false);
-
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
 			@Override
 			public void handle(WindowEvent event) {// 关闭按钮逻辑处理
-
+				System.gc();
+				System.exit(0);
 			}
 		});
 
@@ -72,15 +89,81 @@ public class SudukuWindow extends Application {
 		LogoMenuPane logo = new LogoMenuPane();
 		logo.setFocusTraversable(true);
 		contentPane.getChildren().add(logo);
-		
-		Scene scene = new Scene(contentPane, SCREEN_W, SCREEN_H);
+
+		mainP = new BorderPane();
+		mainP.setStyle("-fx-background:transparent;");
+		mainP.setCenter(contentPane);
+
+		HBox stateBox = new HBox();// 显示游戏状态
+		stateBox.setFillHeight(true);
+		stateBox.setPadding(new Insets(0, 4, 4, 0));
+
+		// show divide
+		StatePanel divide = new StatePanel("Sudoku by Madison Wu", "");
+		divide.setColor(Color.BLACK);
+		stateBox.getChildren().add(divide);
+
+		Pane state = new Pane();
+		state.getChildren().add(stateBox);
+		mainP.setTop(state);
+
+		Scene scene = new Scene(mainP);// 不指定宽高
 		primaryStage.setScene(scene);
+		// 没有窗口装饰
+		primaryStage.initStyle(StageStyle.TRANSPARENT);
+		scene.setFill(null);
+
+		//update time
+		EventHandler<ActionEvent> eventHandler = e -> {
+			
+			String time = updataTime();
+			
+			if(isStart)
+			{
+				timePane.setContentText(time);
+			}
+		};
+		
+		Timeline animation = new Timeline(new KeyFrame(Duration.millis(1000), eventHandler));
+		animation.setCycleCount(Timeline.INDEFINITE);
+		animation.play();
+		
 		primaryStage.show();
+		
 
 	}
 
+	/**
+	 * 显示游戏状态 关卡难度&时间
+	 * 
+	 * @throws FileNotFoundException
+	 */
+	private void showGameState() throws FileNotFoundException {
+
+		HBox stateBox = new HBox();// 显示游戏状态
+		stateBox.setFillHeight(true);
+		// stateBox.setStyle("-fx-background:transparent;");
+		stateBox.setPadding(new Insets(0, 4, 4, 0));
+
+		// show current range
+		StatePanel curentCount = new StatePanel("Dificulty:", level.toString() + "-" + count);
+		stateBox.getChildren().add(curentCount);
+
+		// show divide
+		StatePanel divide = new StatePanel("                                                       ", "");
+		stateBox.getChildren().add(divide);
+
+		timePane = new StatePanel(new Image(new FileInputStream(new File("img/time_icon.png"))), time);
+		stateBox.getChildren().add(timePane);
+
+		Pane state = new Pane();
+		// top.setStyle("-fx-background:transparent;");
+		state.getChildren().add(stateBox);
+		mainP.setTop(state);
+	}
+
 	private void startGame() {
-		
+
 		setUpBorad();
 		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
 		// ----------------------------content pane
@@ -89,8 +172,10 @@ public class SudukuWindow extends Application {
 		contentPane.getChildren().add(gridPane);
 
 		// ----------------------------pause pane
-		pause = new Rectangle(SCREEN_W, SCREEN_H);
-		pause.setFill(new Color(0.5, 0.5, 0.5, .7));
+		pause = new StackPane();
+		paseBackground = new Rectangle(SCREEN_W, SCREEN_H);
+		paseBackground.setFill(new Color(0.5, 0.5, 0.5, .7));
+		pause.getChildren().add(paseBackground);
 	}
 
 	// 初始化数据
@@ -106,14 +191,13 @@ public class SudukuWindow extends Application {
 		grid_h = SCREEN_H / 9;
 		grid_w = SCREEN_W / 9;
 
-		difficultys = new DifficultyLevel[]{DifficultyLevel.EASY,DifficultyLevel.MEDIUM,DifficultyLevel.DIFFICULT,DifficultyLevel.EVIL};
-		
+		difficultys = new DifficultyLevel[] { DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.DIFFICULT,
+				DifficultyLevel.EVIL };
+
 		// 假设难度为简单
 		// level = DifficultyLevel.EASY;
-		level = DifficultyLevel.MEDIUM;
-
-//		loadPazzle();
-
+		level = DifficultyLevel.EASY;
+		// loadPazzle();
 	}
 
 	private void setUpBorad() {
@@ -128,6 +212,8 @@ public class SudukuWindow extends Application {
 
 			if (cheackSolve)
 				return;
+
+			// show pause window
 
 			String keyName = e.getCode().getName();
 
@@ -176,14 +262,15 @@ public class SudukuWindow extends Application {
 							cheackSolve = SudukuTool.cheackSolve(matrix);
 
 							if (cheackSolve) {
-								// 绘画pause background and win text
+								isStart = false;
 								contentPane.getChildren().add(pause);
+								// 绘画pause background and win text
 								Label text = new Label("Congratulation,You Finsh It\nClick to next");
 								text.setTextFill(Color.WHITE);
 								text.setFont(Font.font(STYLESHEET_MODENA, 35));
 								text.setAlignment(Pos.CENTER);
-
-								contentPane.getChildren().add(text);
+								text.setTextAlignment(TextAlignment.CENTER);
+								pause.getChildren().add(text);
 							}
 
 							break;
@@ -201,13 +288,12 @@ public class SudukuWindow extends Application {
 
 				Cell label = new Cell(this, i, j);
 
+				label.setFont(new Font("Monaco", 35));
+				label.setTextFill(Color.BLACK);
+
 				if (pazzle[i][j] != 0) {
 					label.setText("" + matrix[i][j]);
 					label.setTextFill(Color.GRAY.darker());
-					label.setFont(new Font(20));
-
-				} else {
-					label.setFont(new Font("Monaco", 20));
 				}
 
 				gridPane.add(label, j, i);
@@ -218,6 +304,7 @@ public class SudukuWindow extends Application {
 
 	// 绘画提示颜色
 	private void drawTips(ObservableList<Node> list) {
+
 		for (Node node_ : list) {
 			Cell c_ = (Cell) node_;
 			if (!c_.getText().equals("") && !SudukuTool.isValid(c_.getRow(), c_.getCol(), matrix)) {
@@ -430,13 +517,14 @@ public class SudukuWindow extends Application {
 
 	/**
 	 * 主界面
+	 * 
 	 * @param args
 	 */
 	public class LogoMenuPane extends StackPane {
 
 		private VBox buttonBox;
 		private SelectButton[] difficutlySelections;
-		private int currentSelected;
+		private int currentSelected = -1;
 
 		public LogoMenuPane() {
 
@@ -469,17 +557,14 @@ public class SudukuWindow extends Application {
 
 				SelectButton selectButton = new SelectButton(dificultyText[i]);
 
-				selectButton.setOnMouseClicked(e -> {
-
+				selectButton.setOnMouseEntered(e -> {
 					difficutlyMenuClear();
 					selectButton.setSelete(true);
-
 				});
 
-				if (i == 0) {
-					selectButton.setSelete(true);
-					currentSelected = 0;
-				}
+				selectButton.setOnMouseExited(e -> {
+					selectButton.setSelete(false);
+				});
 
 				buttonBox.getChildren().add(selectButton);
 				difficutlySelections[i] = selectButton;
@@ -498,15 +583,52 @@ public class SudukuWindow extends Application {
 
 				// startGame
 				if ("Enter".equals(e.getCode().getName()) && currentSelected != -1) {
+
 					// get current difficulty
 					level = difficultys[currentSelected];
-//					System.out.println(level);
+					// System.out.println(level);
 					currentSelected = -1;
 					SudukuWindow.this.contentPane.getChildren().remove(this);
 					loadPazzle();
 					startGame();
+					
+					try {
+						showGameState();
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+					isStart = true;
 				}
 			});
+
+			this.setOnMouseClicked(e -> {
+
+				for (int i = 0; i < difficultys.length; i++) {
+					if (difficutlySelections[i].isSeleted()) {
+						currentSelected = i;
+						break;
+					}
+				}
+
+				if (currentSelected != -1) {
+					level = difficultys[currentSelected];
+					// System.out.println(level);
+					currentSelected = -1;
+					SudukuWindow.this.contentPane.getChildren().remove(this);
+					loadPazzle();
+					startGame();
+
+					try {
+						showGameState();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+					isStart = true;
+				}
+			});
+
 		}
 
 		private void selectionMenu(String name) {
@@ -543,10 +665,26 @@ public class SudukuWindow extends Application {
 				selectBtn.setSelete(false);
 			}
 		}
+
+	}// LogMenu
+	
+	/**
+	 * 更新时间
+	 */
+	private String updataTime() {
+		
+		String time = "00:00:00";
+		if(isStart)
+		{
+			time = sdf.format(new Date(System.currentTimeMillis() - currentTime-8*60*60*1000));
+		}
+		else
+		{
+			currentTime = System.currentTimeMillis();
+		}
+		return time;
 	}
 
-	
-	
 	public static void main(String[] args) {
 		Application.launch(args);
 	}

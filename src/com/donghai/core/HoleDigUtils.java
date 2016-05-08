@@ -21,6 +21,13 @@ public class HoleDigUtils {
 		
 		for (int num = 1; num <= numOfFiles; num++) {
 			int[][] array = new int[9][9];
+			
+			for (int i = 0; i < array.length; i++) {
+				for (int j = 0; j < array.length; j++) {
+					
+					array[i][j] = 1;
+				}
+			}
 			int randomInt = 0;
 			for (int i = 0; i < 9; i++) {
 
@@ -32,7 +39,7 @@ public class HoleDigUtils {
 					int col = (i % 3) * 3 + (randomPositions[j] - 1) % 3;
 					int row = (i / 3) * 3 + ((randomPositions[j] - 1) / 3);
 
-					array[row][col] = 1;
+					array[row][col] = 0;
 				}
 				/**
 				 * 将array写入文件

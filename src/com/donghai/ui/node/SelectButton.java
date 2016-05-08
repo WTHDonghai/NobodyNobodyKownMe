@@ -1,60 +1,47 @@
 package com.donghai.ui.node;
 
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-public class SelectButton extends FlowPane
-{
-	
-	private Label label;
-	private Label arrow;
-	private boolean isSeleted;
+public class SelectButton extends Pane {
 
-	public SelectButton(String text) 
-	{
+	private Label label;
+	private boolean isSeleted;
+	private String arrow = "-> ";
+	private String mes;
+	
+	public SelectButton(String text) {
+	
+		mes = text;
 		label = new Label(text);
 		label.setFont(new Font(25));
-		arrow = new Label("-> ");
-		arrow.setFont(new Font(25));
-		
+		label.setTextFill(Color.BLACK);
 		this.getChildren().add(label);
 	}
-	
-	{
-		isSeleted = false;
-	}
-	
-	public boolean isSeleted()
-	{
+
+	public boolean isSeleted() {
 		return isSeleted;
 	}
-	
-	public void setSelete(boolean isSeleted)
-	{
+
+	public void setSelete(boolean isSeleted) {
 		this.isSeleted = isSeleted;
-		
-		if(isSeleted)
-		{
-			if(!getChildren().get(0).equals(arrow))
-			{
-				getChildren().add(0, arrow);
+
+		if (isSeleted) {
+			if (!getChildren().get(0).equals(arrow)) {
+				label.setText(arrow + mes);
 				label.setTextFill(Color.BROWN);
 			}
-		}
-		else
-		{
-			if(getChildren().contains(arrow))
-			{
-				getChildren().remove(0);
-				label.setTextFill(Color.BLACK);
-			}
+		} else {
+
+			label.setText(mes);
+			label.setTextFill(Color.BLACK);
 		}
 	}
 
 	public String getText() {
 		return label.getText();
 	}
-	
+
 }
