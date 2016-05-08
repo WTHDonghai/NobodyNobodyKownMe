@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import com.donghai.core.DifficultyLevel;
@@ -12,6 +13,7 @@ import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
 import com.donghai.ui.node.SelectButton;
 import com.donghai.ui.node.StatePanel;
+import com.donghai.util.ConfigUitl;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -65,10 +67,10 @@ public class SudukuWindow extends Application {
 	private Rectangle paseBackground;
 	private String time;// 做题计时
 	private BorderPane mainP;// 程序的主面板
-	private boolean isStart;//开始游戏
+	private boolean isStart;// 开始游戏
 	private StatePanel timePane;
 	private long currentTime;
-	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss",Locale.US);
+	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -79,6 +81,15 @@ public class SudukuWindow extends Application {
 
 			@Override
 			public void handle(WindowEvent event) {// 关闭按钮逻辑处理
+
+				for (int[] ary : pazzle) {
+
+					for (int i : ary) {
+						System.out.print(i);
+					}
+					System.out.println();
+				}
+				ConfigUitl.writeRecord(level, count, matrix);
 				System.gc();
 				System.exit(0);
 			}
@@ -113,23 +124,21 @@ public class SudukuWindow extends Application {
 		primaryStage.initStyle(StageStyle.TRANSPARENT);
 		scene.setFill(null);
 
-		//update time
+		// update time
 		EventHandler<ActionEvent> eventHandler = e -> {
-			
+
 			String time = updataTime();
-			
-			if(isStart)
-			{
+
+			if (isStart) {
 				timePane.setContentText(time);
 			}
 		};
-		
+
 		Timeline animation = new Timeline(new KeyFrame(Duration.millis(1000), eventHandler));
 		animation.setCycleCount(Timeline.INDEFINITE);
 		animation.play();
-		
+
 		primaryStage.show();
-		
 
 	}
 
@@ -162,7 +171,10 @@ public class SudukuWindow extends Application {
 		mainP.setTop(state);
 	}
 
-	private void startGame() {
+	/**
+	 * 初始化数独界面相关的组件
+	 */
+	private void initGameBorder() {
 
 		setUpBorad();
 		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
@@ -252,6 +264,7 @@ public class SudukuWindow extends Application {
 						if (code.isDigitKey() && !code.getName().equals("0") && pazzle[c.getRow()][c.getCol()] == 0) {
 							c.setText(code.getName());
 							redrawFocus(list);
+
 							matrix[c.getRow()][c.getCol()] = Integer.valueOf(code.getName());
 
 							// 显示错误的空格
@@ -404,6 +417,7 @@ public class SudukuWindow extends Application {
 
 	// 载入数独谜题
 	private void loadPazzle() {
+
 		File file = new File(SUDOKU_FOLDER_NAME);
 
 		if (!file.exists()) {// 生成题目
@@ -418,6 +432,7 @@ public class SudukuWindow extends Application {
 	 * 初始化谜题
 	 */
 	private void initPazzle() {
+
 		String fileName = "boards/" + count + ".su";
 		// 扫描谜题
 		matrix = SudukuTool.scanSuduku(count, fileName);
@@ -590,8 +605,8 @@ public class SudukuWindow extends Application {
 					currentSelected = -1;
 					SudukuWindow.this.contentPane.getChildren().remove(this);
 					loadPazzle();
-					startGame();
-					
+					initGameBorder();
+
 					try {
 						showGameState();
 					} catch (Exception e1) {
@@ -611,20 +626,93 @@ public class SudukuWindow extends Application {
 				}
 
 				if (currentSelected != -1) {
+
 					level = difficultys[currentSelected];
 					// System.out.println(level);
 					currentSelected = -1;
 					SudukuWindow.this.contentPane.getChildren().remove(this);
-					loadPazzle();
-					startGame();
+					
+					//--------------------------------------------------------------
+					// 首先检查当前难度下有没有纪录，如果没有纪录，则重新载入纪录，否则，读取纪录
+					File recordDir = new File("record/");
+					File[] listFiles = recordDir.listFiles();
+					File recordFile = null;
+					boolean canRead = false;
+					
+					if (listFiles.length != 0) {
+						// 获取当前难度纪录的关卡数count
+						for (int i = 0; i < listFiles.length; i++) {
 
+							String name = listFiles[i].getName();
+
+							if (level.toString().equals(name.substring(0, name.indexOf("_")))) {// 获取到当前的难度纪录文件
+								System.out.println("找到纪录文件");
+								canRead = true;
+								recordFile = listFiles[i];
+								count = Integer.valueOf(name.substring(name.indexOf("_") + 1, name.indexOf("_") + 2));
+								break;
+							}
+						}
+					}
+					if (canRead) {
+						
+						StringBuilder sb = new StringBuilder();
+						sb.append(SUDOKU_FOLDER_NAME);
+						sb.append("/");
+						sb.append(count);
+						switch (level) {
+						case EASY:
+							sb.append("_easy.txt");
+							break;
+						case MEDIUM:
+							sb.append("_medium.txt");
+							break;
+						case DIFFICULT:
+							sb.append("_difficult.txt");
+							break;
+						case EVIL:
+							sb.append("_evil.txt");
+							break;
+						}
+
+						pazzle = SudukuTool.scanSuduku(count, sb.toString());
+						matrix = ConfigUitl.readRecord(recordFile);
+						initGameBorder();
+
+						ObservableList<Node> list = gridPane.getChildren();
+
+						for (Node node : list) {
+
+							if (node instanceof Cell) {
+
+								Cell c = (Cell) node;
+
+								if (pazzle[c.getRow()][c.getCol()] == 0 && matrix[c.getRow()][c.getCol()] != 0) {
+
+									c.setText(matrix[c.getRow()][c.getCol()] + "");
+									redrawFocus(list);
+									// 显示错误的空格
+									drawTips(list);
+								}
+							}
+						}
+
+					}
+					
+					if(!canRead){
+						
+						System.out.println("没有存储的纪录");
+						loadPazzle();
+						initGameBorder();
+					}
+					
 					try {
 						showGameState();
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-					
+
 					isStart = true;
 				}
 			});
@@ -667,19 +755,16 @@ public class SudukuWindow extends Application {
 		}
 
 	}// LogMenu
-	
+
 	/**
 	 * 更新时间
 	 */
 	private String updataTime() {
-		
+
 		String time = "00:00:00";
-		if(isStart)
-		{
-			time = sdf.format(new Date(System.currentTimeMillis() - currentTime-8*60*60*1000));
-		}
-		else
-		{
+		if (isStart) {
+			time = sdf.format(new Date(System.currentTimeMillis() - currentTime - 8 * 60 * 60 * 1000));
+		} else {
 			currentTime = System.currentTimeMillis();
 		}
 		return time;
