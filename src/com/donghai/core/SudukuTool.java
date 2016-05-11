@@ -24,7 +24,7 @@ public class SudukuTool {
 	public static void loadSuduPazzle() {
 		SudukuPazzleFactory pazzleFactory = new SudukuPazzleFactory();
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 1000; i++) {
 
 			int[][] pazzle = pazzleFactory.makePazzle();
 

@@ -706,13 +706,14 @@ public class SudukuWindow extends Application {
 	public void nextPazzle() {
 		this.count++;
 		reInitPazzle();
-		curentCount.setContentText(level.toString() + "-" + count);
+		curentCount.setContentText("Dificulty:"+level.toString() + "-" + count);
 	}
 
 	/**
 	 * 返回主界面
 	 */
 	public void backHome() {
+		
 		if (!cheackSolve)
 			ConfigUtil.writeRecord(level, count, matrix);
 
