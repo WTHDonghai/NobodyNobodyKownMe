@@ -10,6 +10,7 @@ import com.donghai.core.DifficultyLevel;
 import com.donghai.core.SudukuTool;
 import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
+import com.donghai.ui.node.FinishedPane;
 import com.donghai.ui.node.SelectButton;
 import com.donghai.ui.node.StatePanel;
 import com.donghai.util.ConfigUtil;
@@ -71,6 +72,7 @@ public class SudukuWindow extends Application {
 	private long currentTime;
 
 	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
+	private StatePanel curentCount;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -148,8 +150,7 @@ public class SudukuWindow extends Application {
 		// stateBox.setStyle("-fx-background:transparent;");
 		stateBox.setPadding(new Insets(0, 4, 4, 0));
 
-		// show current range
-		StatePanel curentCount = new StatePanel("Dificulty:", level.toString() + "-" + count);
+		curentCount = new StatePanel("Dificulty:", level.toString() + "-" + count);
 		stateBox.getChildren().add(curentCount);
 
 		// show divide
@@ -173,7 +174,6 @@ public class SudukuWindow extends Application {
 		setUpBorad();
 		borad = new BoradPanel(matrix, grid_w, grid_h, SCREEN_W, SCREEN_H);
 		// ----------------------------content pane
-
 		contentPane.getChildren().add(borad);
 		contentPane.getChildren().add(gridPane);
 
@@ -187,7 +187,6 @@ public class SudukuWindow extends Application {
 	// 初始化数据
 	{
 
-		// cheackSolve = true;
 		currentCol = 0;
 		currentRow = 0;
 
@@ -201,9 +200,7 @@ public class SudukuWindow extends Application {
 				DifficultyLevel.EVIL };
 
 		// 假设难度为简单
-		// level = DifficultyLevel.EASY;
 		level = DifficultyLevel.EASY;
-		// loadPazzle();
 	}
 
 	private void setUpBorad() {
@@ -213,14 +210,12 @@ public class SudukuWindow extends Application {
 		gridPane.setAlignment(Pos.CENTER);
 		ObservableList<Node> list = gridPane.getChildren();
 		gridPane.setFocusTraversable(true);
-
 		gridPane.setOnKeyPressed(e -> {
 
 			if (cheackSolve)
 				return;
-
+			
 			// show pause window
-
 			String keyName = e.getCode().getName();
 
 			// 删除操作
@@ -236,7 +231,6 @@ public class SudukuWindow extends Application {
 
 								// 清除错误提示
 								drawTips(list);
-
 								c.setText("");
 							}
 							break;
@@ -263,23 +257,13 @@ public class SudukuWindow extends Application {
 
 							// 显示错误的空格
 							drawTips(list);
-
-							// printMatrix();
-
+							
 							cheackSolve = SudukuTool.cheackSolve(matrix);
 
 							if (cheackSolve) {
 								isStart = false;
-								contentPane.getChildren().add(pause);
-								// 绘画pause background and win text
-								Label text = new Label("Congratulation,You Finsh It\nClick to next");
-								text.setTextFill(Color.WHITE);
-								text.setFont(Font.font(STYLESHEET_MODENA, 35));
-								text.setAlignment(Pos.CENTER);
-								text.setTextAlignment(TextAlignment.CENTER);
-								pause.getChildren().add(text);
+								contentPane.getChildren().add(new FinishedPane(this));
 							}
-
 							break;
 						}
 					}
@@ -457,7 +441,6 @@ public class SudukuWindow extends Application {
 		}
 
 		pazzle = SudukuTool.scanSuduku(count, sb.toString());
-
 		for (int i = 0; i < pazzle.length; i++) {
 
 			for (int j = 0; j < pazzle[0].length; j++) {
@@ -551,8 +534,6 @@ public class SudukuWindow extends Application {
 			Image img = new Image(fis);
 			ImageView background = new ImageView(img);
 
-			// StackPane contentP = new StackPane();
-
 			Rectangle r = new Rectangle(630, 630);
 			r.setFill(Color.WHITE);
 
@@ -611,13 +592,13 @@ public class SudukuWindow extends Application {
 		}
 
 		private void startGame() {
+			
 			if (currentSelected != -1) {
 
 				level = difficultys[currentSelected];
 				// System.out.println(level);
 				currentSelected = -1;
 				SudukuWindow.this.contentPane.getChildren().remove(this);
-
 				// --------------------------------------------------------------
 				// 首先检查当前难度下有没有纪录，如果没有纪录，则重新载入纪录，否则，读取纪录
 				File recordDir = new File("record/");
@@ -632,9 +613,9 @@ public class SudukuWindow extends Application {
 						String name = listFiles[i].getName();
 
 						if (level.toString().equals(name.substring(0, name.indexOf("_")))) {// 获取到当前的难度纪录文件
-							System.out.println("找到纪录文件");
 							canRead = true;
 							recordFile = listFiles[i];
+							System.out.println(listFiles[i].delete());
 							count = Integer.valueOf(name.substring(name.indexOf("_") + 1, name.indexOf("_") + 2));
 							break;
 						}
@@ -642,52 +623,13 @@ public class SudukuWindow extends Application {
 				}
 				if (canRead) {
 
-					StringBuilder sb = new StringBuilder();
-					sb.append(SUDOKU_FOLDER_NAME);
-					sb.append("/");
-					sb.append(count);
-					switch (level) {
-					case EASY:
-						sb.append("_easy.txt");
-						break;
-					case MEDIUM:
-						sb.append("_medium.txt");
-						break;
-					case DIFFICULT:
-						sb.append("_difficult.txt");
-						break;
-					case EVIL:
-						sb.append("_evil.txt");
-						break;
-					}
-
-					pazzle = SudukuTool.scanSuduku(count, sb.toString());
-					matrix = ConfigUtil.readRecord(recordFile);
-					initGameBorder();
-
-					ObservableList<Node> list = gridPane.getChildren();
-
-					for (Node node : list) {
-
-						if (node instanceof Cell) {
-
-							Cell c = (Cell) node;
-
-							if (pazzle[c.getRow()][c.getCol()] == 0 && matrix[c.getRow()][c.getCol()] != 0) {
-
-								c.setText(matrix[c.getRow()][c.getCol()] + "");
-								redrawFocus(list);
-								// 显示错误的空格
-								drawTips(list);
-							}
-						}
-					}
-
+					//获取难度文件的路径
+					StringBuilder sb = getDifficultyTxtPath();
+					//重新初始化盘面
+					reInitPazzle(recordFile, sb);
 				}
 
 				if (!canRead) {
-
-					System.out.println("没有存储的纪录");
 					loadPazzle();
 					initGameBorder();
 				}
@@ -754,6 +696,78 @@ public class SudukuWindow extends Application {
 		return time;
 	}
 
+
+	/**
+	 * 下一题
+	 */
+	public void nextPazzle() 
+	{
+		this.count++;
+		StringBuilder sb = getDifficultyTxtPath();
+		reInitPazzle( sb);
+		curentCount.setContentText(level.toString() + "-" + count);
+	}
+
+	/**
+	 * 返回主界面
+	 */
+	public void backHome() {
+		
+	}
+	
+	/**
+	 * 获得难度文件路径
+	 * @return
+	 */
+	private StringBuilder getDifficultyTxtPath() {
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(SUDOKU_FOLDER_NAME);
+		sb.append("/");
+		sb.append(count);
+		switch (level) {
+		case EASY:
+			sb.append("_easy.txt");
+			break;
+		case MEDIUM:
+			sb.append("_medium.txt");
+			break;
+		case DIFFICULT:
+			sb.append("_difficult.txt");
+			break;
+		case EVIL:
+			sb.append("_evil.txt");
+			break;
+		}
+		return sb;
+	}
+
+	/**
+	 * 重新初始化盘面
+	 * @param recordFile
+	 * @param sb
+	 */
+	private void reInitPazzle(File recordFile, StringBuilder sb) {
+		
+		initPazzle();
+		initGameBorder();
+	}
+	
+	private void reInitPazzle(StringBuilder sb) {
+		
+		gridPane = new GridPane();
+		currentCol = 0;
+		currentRow = 0;
+		isStart = true;
+		cheackSolve = false;
+		gridPane.getChildren().clear();
+		contentPane.getChildren().clear();
+		loadPazzle();
+		initGameBorder();
+		setUpBorad();
+		System.gc();
+	}
+	
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
