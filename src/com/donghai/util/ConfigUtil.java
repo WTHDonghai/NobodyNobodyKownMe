@@ -20,7 +20,7 @@ import com.donghai.core.DifficultyLevel;
  * @author donghai
  *
  */
-public class ConfigUitl {
+public class ConfigUtil {
 	private static final String CONFIG_PATH = "config/config.ini";
 	private static final Object leve = null;
 	private static Properties pro;
@@ -133,6 +133,11 @@ public class ConfigUitl {
 		}
 
 		return recordPazzle;
+	}
+
+	public static void delete(File recordFile) 
+	{
+		System.out.println(recordFile.delete());
 	}
 
 }

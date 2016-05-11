@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import com.donghai.core.DifficultyLevel;
@@ -13,7 +12,7 @@ import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
 import com.donghai.ui.node.SelectButton;
 import com.donghai.ui.node.StatePanel;
-import com.donghai.util.ConfigUitl;
+import com.donghai.util.ConfigUtil;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -70,6 +69,7 @@ public class SudukuWindow extends Application {
 	private boolean isStart;// 开始游戏
 	private StatePanel timePane;
 	private long currentTime;
+
 	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
 
 	@Override
@@ -82,14 +82,8 @@ public class SudukuWindow extends Application {
 			@Override
 			public void handle(WindowEvent event) {// 关闭按钮逻辑处理
 
-				for (int[] ary : pazzle) {
-
-					for (int i : ary) {
-						System.out.print(i);
-					}
-					System.out.println();
-				}
-				ConfigUitl.writeRecord(level, count, matrix);
+				if(!cheackSolve)
+				ConfigUtil.writeRecord(level, count, matrix);
 				System.gc();
 				System.exit(0);
 			}
@@ -599,20 +593,7 @@ public class SudukuWindow extends Application {
 				// startGame
 				if ("Enter".equals(e.getCode().getName()) && currentSelected != -1) {
 
-					// get current difficulty
-					level = difficultys[currentSelected];
-					// System.out.println(level);
-					currentSelected = -1;
-					SudukuWindow.this.contentPane.getChildren().remove(this);
-					loadPazzle();
-					initGameBorder();
-
-					try {
-						showGameState();
-					} catch (Exception e1) {
-						e1.printStackTrace();
-					}
-					isStart = true;
+					startGame();
 				}
 			});
 
@@ -624,99 +605,102 @@ public class SudukuWindow extends Application {
 						break;
 					}
 				}
-
-				if (currentSelected != -1) {
-
-					level = difficultys[currentSelected];
-					// System.out.println(level);
-					currentSelected = -1;
-					SudukuWindow.this.contentPane.getChildren().remove(this);
-					
-					//--------------------------------------------------------------
-					// 首先检查当前难度下有没有纪录，如果没有纪录，则重新载入纪录，否则，读取纪录
-					File recordDir = new File("record/");
-					File[] listFiles = recordDir.listFiles();
-					File recordFile = null;
-					boolean canRead = false;
-					
-					if (listFiles.length != 0) {
-						// 获取当前难度纪录的关卡数count
-						for (int i = 0; i < listFiles.length; i++) {
-
-							String name = listFiles[i].getName();
-
-							if (level.toString().equals(name.substring(0, name.indexOf("_")))) {// 获取到当前的难度纪录文件
-								System.out.println("找到纪录文件");
-								canRead = true;
-								recordFile = listFiles[i];
-								count = Integer.valueOf(name.substring(name.indexOf("_") + 1, name.indexOf("_") + 2));
-								break;
-							}
-						}
-					}
-					if (canRead) {
-						
-						StringBuilder sb = new StringBuilder();
-						sb.append(SUDOKU_FOLDER_NAME);
-						sb.append("/");
-						sb.append(count);
-						switch (level) {
-						case EASY:
-							sb.append("_easy.txt");
-							break;
-						case MEDIUM:
-							sb.append("_medium.txt");
-							break;
-						case DIFFICULT:
-							sb.append("_difficult.txt");
-							break;
-						case EVIL:
-							sb.append("_evil.txt");
-							break;
-						}
-
-						pazzle = SudukuTool.scanSuduku(count, sb.toString());
-						matrix = ConfigUitl.readRecord(recordFile);
-						initGameBorder();
-
-						ObservableList<Node> list = gridPane.getChildren();
-
-						for (Node node : list) {
-
-							if (node instanceof Cell) {
-
-								Cell c = (Cell) node;
-
-								if (pazzle[c.getRow()][c.getCol()] == 0 && matrix[c.getRow()][c.getCol()] != 0) {
-
-									c.setText(matrix[c.getRow()][c.getCol()] + "");
-									redrawFocus(list);
-									// 显示错误的空格
-									drawTips(list);
-								}
-							}
-						}
-
-					}
-					
-					if(!canRead){
-						
-						System.out.println("没有存储的纪录");
-						loadPazzle();
-						initGameBorder();
-					}
-					
-					try {
-						showGameState();
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					isStart = true;
-				}
+				startGame();
 			});
 
+		}
+
+		private void startGame() {
+			if (currentSelected != -1) {
+
+				level = difficultys[currentSelected];
+				// System.out.println(level);
+				currentSelected = -1;
+				SudukuWindow.this.contentPane.getChildren().remove(this);
+
+				// --------------------------------------------------------------
+				// 首先检查当前难度下有没有纪录，如果没有纪录，则重新载入纪录，否则，读取纪录
+				File recordDir = new File("record/");
+				File[] listFiles = recordDir.listFiles();
+				File recordFile = null;
+				boolean canRead = false;
+
+				if (listFiles.length != 0) {
+					// 获取当前难度纪录的关卡数count
+					for (int i = 0; i < listFiles.length; i++) {
+
+						String name = listFiles[i].getName();
+
+						if (level.toString().equals(name.substring(0, name.indexOf("_")))) {// 获取到当前的难度纪录文件
+							System.out.println("找到纪录文件");
+							canRead = true;
+							recordFile = listFiles[i];
+							count = Integer.valueOf(name.substring(name.indexOf("_") + 1, name.indexOf("_") + 2));
+							break;
+						}
+					}
+				}
+				if (canRead) {
+
+					StringBuilder sb = new StringBuilder();
+					sb.append(SUDOKU_FOLDER_NAME);
+					sb.append("/");
+					sb.append(count);
+					switch (level) {
+					case EASY:
+						sb.append("_easy.txt");
+						break;
+					case MEDIUM:
+						sb.append("_medium.txt");
+						break;
+					case DIFFICULT:
+						sb.append("_difficult.txt");
+						break;
+					case EVIL:
+						sb.append("_evil.txt");
+						break;
+					}
+
+					pazzle = SudukuTool.scanSuduku(count, sb.toString());
+					matrix = ConfigUtil.readRecord(recordFile);
+					initGameBorder();
+
+					ObservableList<Node> list = gridPane.getChildren();
+
+					for (Node node : list) {
+
+						if (node instanceof Cell) {
+
+							Cell c = (Cell) node;
+
+							if (pazzle[c.getRow()][c.getCol()] == 0 && matrix[c.getRow()][c.getCol()] != 0) {
+
+								c.setText(matrix[c.getRow()][c.getCol()] + "");
+								redrawFocus(list);
+								// 显示错误的空格
+								drawTips(list);
+							}
+						}
+					}
+
+				}
+
+				if (!canRead) {
+
+					System.out.println("没有存储的纪录");
+					loadPazzle();
+					initGameBorder();
+				}
+
+				try {
+					showGameState();
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
+				isStart = true;
+			}
 		}
 
 		private void selectionMenu(String name) {
