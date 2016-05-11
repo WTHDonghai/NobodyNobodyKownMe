@@ -70,6 +70,7 @@ public class SudukuWindow extends Application {
 
 	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
 	private StatePanel curentCount;
+	private LogoMenuPane logo;
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
@@ -90,7 +91,7 @@ public class SudukuWindow extends Application {
 
 		contentPane = new Pane();
 
-		LogoMenuPane logo = new LogoMenuPane();
+		logo = new LogoMenuPane();
 		logo.setFocusTraversable(true);
 		contentPane.getChildren().add(logo);
 
@@ -222,6 +223,7 @@ public class SudukuWindow extends Application {
 					if (node instanceof Cell) {
 						Cell c = (Cell) node;
 						if (c.getSelect()) {
+
 							if (!c.getText().equals("") && pazzle[c.getRow()][c.getCol()] != 1) {
 
 								matrix[c.getRow()][c.getCol()] = Integer.valueOf(0);
@@ -243,10 +245,14 @@ public class SudukuWindow extends Application {
 				if (node instanceof Cell) {
 
 					Cell c = (Cell) node;
+
 					if (c.getSelect()) {
+
+						
 						KeyCode code = e.getCode();
 						// 是否是数字
 						if (code.isDigitKey() && !code.getName().equals("0") && pazzle[c.getRow()][c.getCol()] == 0) {
+							
 							c.setText(code.getName());
 							redrawFocus(list);
 
@@ -578,6 +584,7 @@ public class SudukuWindow extends Application {
 			this.setOnMouseClicked(e -> {
 
 				for (int i = 0; i < difficultys.length; i++) {
+
 					if (difficutlySelections[i].isSeleted()) {
 						currentSelected = i;
 						break;
@@ -698,8 +705,7 @@ public class SudukuWindow extends Application {
 	 */
 	public void nextPazzle() {
 		this.count++;
-		StringBuilder sb = getDifficultyTxtPath();
-		reInitPazzle(sb);
+		reInitPazzle();
 		curentCount.setContentText(level.toString() + "-" + count);
 	}
 
@@ -707,7 +713,16 @@ public class SudukuWindow extends Application {
 	 * 返回主界面
 	 */
 	public void backHome() {
+		if (!cheackSolve)
+			ConfigUtil.writeRecord(level, count, matrix);
 
+		currentCol = 0;
+		currentRow = 0;
+		isStart = true;
+		cheackSolve = false;
+		gridPane.getChildren().clear();
+		contentPane.getChildren().clear();
+		contentPane.getChildren().add(logo);
 	}
 
 	/**
@@ -769,7 +784,7 @@ public class SudukuWindow extends Application {
 		}
 	}
 
-	private void reInitPazzle(StringBuilder sb) {
+	private void reInitPazzle() {
 
 		currentCol = 0;
 		currentRow = 0;
@@ -779,7 +794,6 @@ public class SudukuWindow extends Application {
 		contentPane.getChildren().clear();
 		loadPazzle();
 		initGameBorder();
-		setUpBorad();
 		System.gc();
 	}
 
