@@ -10,7 +10,6 @@ import com.donghai.core.DifficultyLevel;
 import com.donghai.core.SudukuTool;
 import com.donghai.ui.node.BoradPanel;
 import com.donghai.ui.node.Cell;
-import com.donghai.ui.node.FinishedPane;
 import com.donghai.ui.node.SelectButton;
 import com.donghai.ui.node.StatePanel;
 import com.donghai.util.ConfigUtil;
@@ -24,7 +23,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -38,7 +36,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
@@ -84,8 +81,8 @@ public class SudukuWindow extends Application {
 			@Override
 			public void handle(WindowEvent event) {// 关闭按钮逻辑处理
 
-				if(!cheackSolve)
-				ConfigUtil.writeRecord(level, count, matrix);
+				if (!cheackSolve)
+					ConfigUtil.writeRecord(level, count, matrix);
 				System.gc();
 				System.exit(0);
 			}
@@ -214,7 +211,7 @@ public class SudukuWindow extends Application {
 
 			if (cheackSolve)
 				return;
-			
+
 			// show pause window
 			String keyName = e.getCode().getName();
 
@@ -257,7 +254,7 @@ public class SudukuWindow extends Application {
 
 							// 显示错误的空格
 							drawTips(list);
-							
+
 							cheackSolve = SudukuTool.cheackSolve(matrix);
 
 							if (cheackSolve) {
@@ -592,7 +589,7 @@ public class SudukuWindow extends Application {
 		}
 
 		private void startGame() {
-			
+
 			if (currentSelected != -1) {
 
 				level = difficultys[currentSelected];
@@ -615,7 +612,6 @@ public class SudukuWindow extends Application {
 						if (level.toString().equals(name.substring(0, name.indexOf("_")))) {// 获取到当前的难度纪录文件
 							canRead = true;
 							recordFile = listFiles[i];
-							System.out.println(listFiles[i].delete());
 							count = Integer.valueOf(name.substring(name.indexOf("_") + 1, name.indexOf("_") + 2));
 							break;
 						}
@@ -623,10 +619,11 @@ public class SudukuWindow extends Application {
 				}
 				if (canRead) {
 
-					//获取难度文件的路径
+					// 获取难度文件的路径
 					StringBuilder sb = getDifficultyTxtPath();
-					//重新初始化盘面
+					// 重新初始化盘面
 					reInitPazzle(recordFile, sb);
+					recordFile.delete();
 				}
 
 				if (!canRead) {
@@ -696,15 +693,13 @@ public class SudukuWindow extends Application {
 		return time;
 	}
 
-
 	/**
 	 * 下一题
 	 */
-	public void nextPazzle() 
-	{
+	public void nextPazzle() {
 		this.count++;
 		StringBuilder sb = getDifficultyTxtPath();
-		reInitPazzle( sb);
+		reInitPazzle(sb);
 		curentCount.setContentText(level.toString() + "-" + count);
 	}
 
@@ -712,15 +707,16 @@ public class SudukuWindow extends Application {
 	 * 返回主界面
 	 */
 	public void backHome() {
-		
+
 	}
-	
+
 	/**
 	 * 获得难度文件路径
+	 * 
 	 * @return
 	 */
 	private StringBuilder getDifficultyTxtPath() {
-		
+
 		StringBuilder sb = new StringBuilder();
 		sb.append(SUDOKU_FOLDER_NAME);
 		sb.append("/");
@@ -744,18 +740,37 @@ public class SudukuWindow extends Application {
 
 	/**
 	 * 重新初始化盘面
+	 * 
 	 * @param recordFile
 	 * @param sb
 	 */
 	private void reInitPazzle(File recordFile, StringBuilder sb) {
-		
-		initPazzle();
+
+		pazzle = SudukuTool.scanSuduku(count, sb.toString());
+		matrix = ConfigUtil.readRecord(recordFile);
 		initGameBorder();
+
+		ObservableList<Node> list = gridPane.getChildren();
+
+		for (Node node : list) {
+
+			if (node instanceof Cell) {
+
+				Cell c = (Cell) node;
+
+				if (pazzle[c.getRow()][c.getCol()] == 0 && matrix[c.getRow()][c.getCol()] != 0) {
+
+					c.setText(matrix[c.getRow()][c.getCol()] + "");
+					redrawFocus(list);
+					// 显示错误的空格
+					drawTips(list);
+				}
+			}
+		}
 	}
-	
+
 	private void reInitPazzle(StringBuilder sb) {
-		
-		gridPane = new GridPane();
+
 		currentCol = 0;
 		currentRow = 0;
 		isStart = true;
@@ -767,7 +782,7 @@ public class SudukuWindow extends Application {
 		setUpBorad();
 		System.gc();
 	}
-	
+
 	public static void main(String[] args) {
 		Application.launch(args);
 	}
